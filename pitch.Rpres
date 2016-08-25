@@ -1,0 +1,66 @@
+Developing Data Products Reproducible Pitch Presentation
+========================================================
+author: Jonathan McGuire
+date: `r Sys.Date()`
+autosize: true
+
+Introduction
+========================================================
+
+```{r echo = F}
+library(ggplot2); library(broom); library(knitr); library(reshape2); library(gridExtra)
+```
+
+The diamonds dataset is available within the ggplot2 package. The dataset contains information on `r nrow(diamonds)` diamonds, ranging in size from `r min(diamonds$carat)` to `r max(diamonds$carat)` carats, and with prices ranging from $US`r min(diamonds$price)` to $US`r max(diamonds$price)`. The diamonds are also rated on a number of other variables. Of interest for this application are quality of cut, color of diamond, and clarity of diamond.
+
+The price of a diamond is strongly associated with the size in carats, as shown below.
+
+```{r echo = F, fig.width=24, fig.height=8, fig.show='hold', fig.align='center'}
+ggplot(diamonds, aes(carat, price))+ geom_point(alpha = 0.1) + geom_smooth(method = "lm", color = "red") +ylim(0,max(diamonds$price))
+```
+
+Linear modelling of diamonds dataset
+========================================================
+
+The relationship between size and price can be shown through linear modelling.
+
+```{r, echo=FALSE}
+mod <- tidy(lm(price ~ carat, diamonds))
+kable(mod[2,], row.names = F)
+```
+
+As can be seen above, every carat increase in size is associated with a $US`r round(mod[2,2], 2)` increase in price. Incorporating other predictors subtly changes this relationship, as seen in the table below. 
+
+```{r, echo=FALSE}
+mod2 <- tidy(lm(price ~ carat + cut, diamonds))
+mod3 <- tidy(lm(price ~ carat + clarity, diamonds))
+mod4 <- tidy(lm(price ~ carat + color, diamonds))
+tab <- data.frame(model = c("carat+cut","carat+clarity","carat+color"))
+tab[,2:6] <- rbind(
+  mod2[2,],
+  mod3[2,],
+  mod4[2,]
+)
+kable(tab, row.names = F)
+```
+
+In all cases, inclusion of another predictor increases the strength of the relationship between size and price. This is due to the non-random association between carats and the additional predictors, as shown on the next slide.
+
+
+Scatterplots of diamonds dataset including other factors
+========================================================
+
+```{r echo = F,fig.width=24, fig.height=12, fig.show='hold', fig.align='center'}
+p1 <- ggplot(diamonds, aes(carat, price, color = cut))+ geom_point(alpha = 0.1) + guides(colour = guide_legend(override.aes = list(alpha = 1)))
+p2 <- ggplot(diamonds, aes(carat, price, color = clarity))+ geom_point(alpha = 0.1) + guides(colour = guide_legend(override.aes = list(alpha = 1)))
+p3 <- ggplot(diamonds, aes(carat, price, color = color))+ geom_point(alpha = 0.1) + guides(colour = guide_legend(override.aes = list(alpha = 1)))
+
+
+grid.arrange(p1, p2, p3, ncol=3)
+```
+
+
+App
+====
+My [app](https://jmcguire.shinyapps.io/diamonds/) allows users to visually explore the relationships apparent in the above regressions by selecting variables and sample size. Users can see how the linear relationship between size and price of diamonds shifts in the presence of other predictors, and see how errors of estimates decrease with greater sample sizes.
+
